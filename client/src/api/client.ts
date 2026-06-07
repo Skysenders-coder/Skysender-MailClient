@@ -1,7 +1,19 @@
+const TOKEN_KEY = 'skysender_auth_token';
+
+export const tokenStore = {
+  get: () => sessionStorage.getItem(TOKEN_KEY) ?? '',
+  set: (t: string) => sessionStorage.setItem(TOKEN_KEY, t),
+  clear: () => sessionStorage.removeItem(TOKEN_KEY),
+};
+
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
+  const token = tokenStore.get();
   const res = await fetch(path, {
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'X-Auth-Token': token } : {}),
+      ...options?.headers,
+    },
     ...options,
   });
 
@@ -16,13 +28,20 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  login: (email: string, password: string) =>
-    apiFetch<{ email: string }>('/api/auth/login', {
+  login: async (email: string, password: string) => {
+    const res = await apiFetch<{ email: string; token: string }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
-    }),
+    });
+    tokenStore.set(res.token);
+    return res;
+  },
 
-  logout: () => apiFetch<{ ok: boolean }>('/api/auth/logout', { method: 'POST' }),
+  logout: async () => {
+    const res = await apiFetch<{ ok: boolean }>('/api/auth/logout', { method: 'POST' });
+    tokenStore.clear();
+    return res;
+  },
 
   getFolders: () => apiFetch<import('../types').MailFolder[]>('/api/mail/folders'),
 
@@ -41,12 +60,8 @@ export const api = {
     }),
 
   replyMail: (payload: {
-    to: string;
-    subject: string;
-    html: string;
-    text?: string;
-    inReplyTo: string;
-    references: string;
+    to: string; subject: string; html: string; text?: string;
+    inReplyTo: string; references: string;
   }) =>
     apiFetch<{ ok: boolean }>('/api/mail/reply', {
       method: 'POST',

@@ -1,15 +1,12 @@
 import type { Request, Response, NextFunction } from 'express';
-import { MailSessionService } from '../services/MailSessionService';
+import { MailSessionService } from '../services/MailSessionService.js';
 
 export function requireSession(req: Request, res: Response, next: NextFunction): void {
-  if (!req.session.credentials) {
+  const token = req.headers['x-auth-token'] as string | undefined;
+  if (!token || !MailSessionService.hasSession(token)) {
     res.status(401).json({ error: 'Not authenticated' });
     return;
   }
-  if (!MailSessionService.hasClient(req.sessionID)) {
-    req.session.destroy(() => {});
-    res.status(401).json({ error: 'Session expired, please log in again' });
-    return;
-  }
+  (req as any).authToken = token;
   next();
 }

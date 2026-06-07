@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { deriveHost } from '../services/MailFolderService';
-import { connect } from '../services/ImapService';
-import { MailSessionService } from '../services/MailSessionService';
+import { deriveHost } from '../services/MailFolderService.js';
+import { connect } from '../services/ImapService.js';
+import { MailSessionService } from '../services/MailSessionService.js';
 
 export const authRouter = Router();
 
@@ -17,15 +17,9 @@ authRouter.post('/login', async (req, res) => {
 
   try {
     const client = await connect({ email, password, host });
-    MailSessionService.setClient(req.sessionID, client);
-    req.session.credentials = { email, password, host };
-    req.session.save((err) => {
-      if (err) {
-        res.status(500).json({ error: 'Failed to save session' });
-        return;
-      }
-      res.json({ email });
-    });
+    const token = MailSessionService.createToken();
+    MailSessionService.setSession(token, client, { email, password, host });
+    res.json({ email, token });
   } catch (err: any) {
     const message = err?.message ?? 'Authentication failed';
     const isAuthError =
@@ -37,9 +31,9 @@ authRouter.post('/login', async (req, res) => {
 });
 
 authRouter.post('/logout', async (req, res) => {
-  await MailSessionService.deleteClient(req.sessionID);
-  req.session.destroy(() => {
-    res.clearCookie('connect.sid');
-    res.json({ ok: true });
-  });
+  const token = req.headers['x-auth-token'] as string | undefined;
+  if (token) {
+    await MailSessionService.deleteSession(token);
+  }
+  res.json({ ok: true });
 });
