@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: skysender-mail-api
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && npm run build -w server
+    startCommand: node server/dist/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        sync: false
