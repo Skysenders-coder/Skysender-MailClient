@@ -2,5 +2,11 @@
   "buildCommand": "npm run build -w client",
   "outputDirectory": "client/dist",
   "installCommand": "npm install",
-  "framework": "vite"
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://skysender-mail-api.onrender.com/api/$1"
+    }
+  ]
 }
