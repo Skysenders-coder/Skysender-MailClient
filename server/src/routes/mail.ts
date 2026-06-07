@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { requireSession } from '../middleware/auth.js';
 import { MailSessionService } from '../services/MailSessionService.js';
-import { listRawFolders, listMessages, getMessage } from '../services/ImapService.js';
+import { listRawFolders, listMessages, getMessage, markSeen } from '../services/ImapService.js';
 import { sendMail } from '../services/SmtpService.js';
 import { mapFolders } from '../services/MailFolderService.js';
 import type { SendPayload, ReplyPayload } from '../types.js';
@@ -63,7 +63,10 @@ mailRouter.get('/messages/:id', async (req, res) => {
       return;
     }
     const detail = await getMessage(session.client, matched.imapPath, uid);
-    res.json(detail);
+    if (!detail.seen) {
+      markSeen(session.client, matched.imapPath, uid).catch(() => {});
+    }
+    res.json({ ...detail, seen: true });
   } catch (err: any) {
     res.status(500).json({ error: err?.message ?? 'Failed to get message' });
   }

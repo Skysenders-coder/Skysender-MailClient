@@ -7,12 +7,13 @@ export async function sendMail(
 ): Promise<void> {
   const transporter = nodemailer.createTransport({
     host: creds.host,
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,
+    requireTLS: true,
     auth: { user: creds.email, pass: creds.password },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 20000,
   });
 
   const mailOptions: nodemailer.SendMailOptions = {

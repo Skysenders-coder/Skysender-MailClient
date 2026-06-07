@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useMessage } from '../hooks/useMessage';
 import type { MessageDetail } from '../types';
 
@@ -26,6 +28,13 @@ function addressLine(addrs: { name: string; address: string }[]): string {
 
 export default function MessageViewer({ folder, messageId, onReply }: Props) {
   const { data: msg, isLoading, isError } = useMessage(messageId, folder);
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (msg && !msg.seen) {
+      queryClient.invalidateQueries({ queryKey: ['messages', folder] });
+    }
+  }, [msg?.seen, folder, queryClient]);
 
   if (!messageId) {
     return (
