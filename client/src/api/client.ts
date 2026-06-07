@@ -1,9 +1,17 @@
 const TOKEN_KEY = 'skysender_auth_token';
+const EMAIL_KEY = 'skysender_auth_email';
 
 export const tokenStore = {
   get: () => sessionStorage.getItem(TOKEN_KEY) ?? '',
-  set: (t: string) => sessionStorage.setItem(TOKEN_KEY, t),
-  clear: () => sessionStorage.removeItem(TOKEN_KEY),
+  getEmail: () => sessionStorage.getItem(EMAIL_KEY),
+  set: (token: string, email: string) => {
+    sessionStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(EMAIL_KEY, email);
+  },
+  clear: () => {
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(EMAIL_KEY);
+  },
 };
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
@@ -33,7 +41,7 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    tokenStore.set(res.token);
+    tokenStore.set(res.token, res.email);
     return res;
   },
 

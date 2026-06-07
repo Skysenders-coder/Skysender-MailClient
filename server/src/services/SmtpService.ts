@@ -10,6 +10,9 @@ export async function sendMail(
     port: 465,
     secure: true,
     auth: { user: creds.email, pass: creds.password },
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
 
   const mailOptions: nodemailer.SendMailOptions = {
